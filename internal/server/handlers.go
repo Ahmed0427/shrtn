@@ -16,6 +16,8 @@ type ShortenRequest struct {
     URL string `json:"url"`
 }
 
+const ID_DEFAULT_LENGTH = 8
+
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 func generateShortID(length int) (string, error) {
@@ -61,7 +63,7 @@ func (cfg *Config) handleShortening(w http.ResponseWriter, r *http.Request) {
 	shortID, err := cfg.db.GetID(context.Background(), req.URL)	
 	if shortID == "" {
 		for {
-			shortID, err = generateShortID(6)
+			shortID, err = generateShortID(ID_DEFAULT_LENGTH)
 			if err != nil {
 				http.Error(w, "Faild to generate short ID",
 					http.StatusInternalServerError)
@@ -71,15 +73,18 @@ func (cfg *Config) handleShortening(w http.ResponseWriter, r *http.Request) {
 			if original == "" {
 				params := db.AddURLParams {
 					ID: shortID,
-					Original: req.URL,
+					OriginalUrl: req.URL,
 					CreatedAt: time.Now(),
+					LastAccessedAt: time.Now(),
+					AccessCount: 0,
 				}
-				addedURL, err := cfg.db.AddURL(context.Background(), params)	
+				_, err := cfg.db.AddURL(context.Background(), params)	
 				if err != nil {
 					http.Error(w, "Faild to add entry to the database",
 						http.StatusInternalServerError)
 					return
 				}
+				cfg.cache.Put(shortID, req.URL)
 				break
 			}
 		}
@@ -97,11 +102,18 @@ func (cfg *Config) handleShortening(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *Config) handleRedirection(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	original, err := cfg.db.GetOriginalURL(context.Background(), id)	
-	if err != nil || original == "" {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
+	original_url, err := cfg.cache.Get(id)
+	if err != nil {
+		original_url, err = cfg.db.GetOriginalURL(context.Background(), id)	
+		if err != nil || original_url == "" {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		}
+	} else {
+		cfg.cacheHits += 1
 	}
-	w.Header().Set("Location", original)
+	cfg.cache.Put(id, original_url)
+	cfg.db.UpdateAccessStats(context.Background(), id)
+	w.Header().Set("Location", original_url)
 	w.WriteHeader(http.StatusMovedPermanently)
 }
