@@ -17,6 +17,7 @@ type Config struct {
 	db  *db.Queries
 	cache *utils.LRUCache
 	cacheHits int
+	visitors visitors
 }
 
 func NewRouter(connStr string) *http.ServeMux {
@@ -29,10 +30,18 @@ func NewRouter(connStr string) *http.ServeMux {
 		db: dbQueries,
 		cache: utils.NewLRUCache(CACHE_CAPACITY),
 		cacheHits: 0,
+		visitors: visitors{
+			entries: make(map[string]*visitor),
+		},
 	}
 
 	router := http.NewServeMux()
-	router.HandleFunc("POST /", cfg.handleShortening)
-	router.HandleFunc("GET /{id}", cfg.handleRedirection)
+
+	router.Handle("POST /",
+		cfg.rateLimiterMiddleware(http.HandlerFunc(cfg.handleShortening)))
+	router.Handle("GET /{id}",
+		cfg.rateLimiterMiddleware(http.HandlerFunc(cfg.handleRedirection)))
+
+	go cfg.visitors.cleanupVisitors()
 	return router
 }
