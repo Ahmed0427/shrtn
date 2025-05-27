@@ -1,5 +1,5 @@
 # shrtn
-a simple url shortener service written in go. it provides a rest api to shorten long urls and redirects short urls to their original destinations.
+a url shortener service with rate limiter written in go. it provides a rest API to shorten long urls and redirects short urls to their original destinations.
     
 ### API
 
