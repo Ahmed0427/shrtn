@@ -9,7 +9,9 @@ import (
 )
 
 type Url struct {
-	ID        string
-	Original  string
-	CreatedAt time.Time
+	ID             string
+	OriginalUrl    string
+	CreatedAt      time.Time
+	LastAccessedAt time.Time
+	AccessCount    int32
 }

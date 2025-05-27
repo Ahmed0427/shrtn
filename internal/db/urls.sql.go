@@ -11,44 +11,70 @@ import (
 )
 
 const addURL = `-- name: AddURL :one
-INSERT INTO urls (id, original, created_at)
-VALUES ($1, $2, $3)
-RETURNING id, original, created_at
+INSERT INTO urls (id, original_url, created_at, last_accessed_at, access_count)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, original_url, created_at, last_accessed_at, access_count
 `
 
 type AddURLParams struct {
-	ID        string
-	Original  string
-	CreatedAt time.Time
+	ID             string
+	OriginalUrl    string
+	CreatedAt      time.Time
+	LastAccessedAt time.Time
+	AccessCount    int32
 }
 
 func (q *Queries) AddURL(ctx context.Context, arg AddURLParams) (Url, error) {
-	row := q.db.QueryRowContext(ctx, addURL, arg.ID, arg.Original, arg.CreatedAt)
+	row := q.db.QueryRowContext(ctx, addURL,
+		arg.ID,
+		arg.OriginalUrl,
+		arg.CreatedAt,
+		arg.LastAccessedAt,
+		arg.AccessCount,
+	)
 	var i Url
-	err := row.Scan(&i.ID, &i.Original, &i.CreatedAt)
+	err := row.Scan(
+		&i.ID,
+		&i.OriginalUrl,
+		&i.CreatedAt,
+		&i.LastAccessedAt,
+		&i.AccessCount,
+	)
 	return i, err
 }
 
 const getID = `-- name: GetID :one
 SELECT id FROM urls
-WHERE original = $1
+WHERE original_url = $1
 `
 
-func (q *Queries) GetID(ctx context.Context, original string) (string, error) {
-	row := q.db.QueryRowContext(ctx, getID, original)
+func (q *Queries) GetID(ctx context.Context, originalUrl string) (string, error) {
+	row := q.db.QueryRowContext(ctx, getID, originalUrl)
 	var id string
 	err := row.Scan(&id)
 	return id, err
 }
 
 const getOriginalURL = `-- name: GetOriginalURL :one
-SELECT original FROM urls
+SELECT original_url FROM urls
 WHERE id = $1
 `
 
 func (q *Queries) GetOriginalURL(ctx context.Context, id string) (string, error) {
 	row := q.db.QueryRowContext(ctx, getOriginalURL, id)
-	var original string
-	err := row.Scan(&original)
-	return original, err
+	var original_url string
+	err := row.Scan(&original_url)
+	return original_url, err
+}
+
+const updateAccessStats = `-- name: UpdateAccessStats :exec
+UPDATE urls
+SET access_count = access_count + 1,
+    last_accessed_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) UpdateAccessStats(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, updateAccessStats, id)
+	return err
 }
