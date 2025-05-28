@@ -13,7 +13,6 @@ a url shortener service with rate limiter written in go. it provides a rest API 
 {
   "url": "https://www.example.com/very/long/url"
 }
-
 ```
 
 - **response body:**
@@ -22,7 +21,6 @@ a url shortener service with rate limiter written in go. it provides a rest API 
 {
   "short_url": "http://localhost:8080/abc123"
 }
-
 ```
 
 #### redirect
@@ -41,7 +39,7 @@ a url shortener service with rate limiter written in go. it provides a rest API 
 1. clone the repository:
     
 ```bash
-git clone ...
+git clone <repo_url>
 cd shrtn
 ```
     
@@ -52,10 +50,15 @@ conn_str="postgres://postgres:postgres@localhost:5432/shrtn?sslmode=disable"
 port="8080"
 ```
 
-- adjust the connection string according to your postgresql credentials.
+- adjust the connection string according to your `postgresql` credentials.
    
-- ensure the database `shrtn` exists.
-        
+- ensure the database `shrtn` exists and then run goose:
+
+```bash
+goose -dir sql/migrations postgres \
+	"postgres://postgres:postgres@localhost:5432/shrtn" up    
+```
+       
 3. build and run the application:
     
 ```bash
