@@ -31,8 +31,9 @@ a url shortener service with rate limiter written in go. it provides a rest API 
 
 ### prerequisites
 
-- go installed (version 1.18+ recommended)
+- go installed
 - postgresql running and accessible
+- goose the database migration tool
       
 ### setup
 
