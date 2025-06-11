@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"fmt"
 	"os"
 
 	"github.com/ahmed0427/shrtn/internal/server"
@@ -16,5 +16,5 @@ func main() {
 	PORT := os.Getenv("PORT")
 	router := server.NewRouter(os.Getenv("CONN_STR"))
 	fmt.Printf("URL shortener service running at http://localhost:%s\n", PORT)
-	log.Fatal(http.ListenAndServe(":" + PORT, router))
+	log.Fatal(http.ListenAndServe(":"+PORT, router))
 }

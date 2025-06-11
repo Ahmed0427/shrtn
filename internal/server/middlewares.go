@@ -1,12 +1,11 @@
 package server
 
-
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"sync"
 	"time"
-	"fmt"
 )
 
 const (
@@ -18,13 +17,13 @@ const (
 
 type visitor struct {
 	lastSeen time.Time
-	mu sync.Mutex
-	tokens int
+	mu       sync.Mutex
+	tokens   int
 }
 
 type visitors struct {
 	entries map[string]*visitor
-	mu sync.Mutex
+	mu      sync.Mutex
 }
 
 func (this *visitors) cleanupVisitors() {
@@ -57,7 +56,7 @@ func (this *visitors) getVisitor(ip string) *visitor {
 	}
 	this.entries[ip] = &visitor{
 		lastSeen: time.Now(),
-		tokens: rateLimit,
+		tokens:   rateLimit,
 	}
 	return this.entries[ip]
 }

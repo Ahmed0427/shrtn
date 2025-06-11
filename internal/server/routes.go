@@ -1,9 +1,9 @@
 package server
 
 import (
-	"net/http"
 	"database/sql"
 	"log"
+	"net/http"
 
 	"github.com/ahmed0427/shrtn/internal/db"
 	"github.com/ahmed0427/shrtn/internal/utils"
@@ -14,10 +14,10 @@ import (
 const CACHE_CAPACITY = 1000
 
 type Config struct {
-	db  *db.Queries
-	cache *utils.LRUCache
+	db        *db.Queries
+	cache     *utils.LRUCache
 	cacheHits int
-	visitors visitors
+	visitors  visitors
 }
 
 func NewRouter(connStr string) *http.ServeMux {
@@ -26,9 +26,9 @@ func NewRouter(connStr string) *http.ServeMux {
 		log.Fatal(err)
 	}
 	dbQueries := db.New(dbConn)
-	cfg := Config {
-		db: dbQueries,
-		cache: utils.NewLRUCache(CACHE_CAPACITY),
+	cfg := Config{
+		db:        dbQueries,
+		cache:     utils.NewLRUCache(CACHE_CAPACITY),
 		cacheHits: 0,
 		visitors: visitors{
 			entries: make(map[string]*visitor),

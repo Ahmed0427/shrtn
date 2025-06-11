@@ -1,19 +1,19 @@
 package server
 
 import (
-	"net/http"
+	"context"
 	"crypto/rand"
 	"encoding/json"
-	"net/url"
 	"math/big"
-	"context"
+	"net/http"
+	"net/url"
 	"time"
-	
+
 	"github.com/ahmed0427/shrtn/internal/db"
 )
 
 type ShortenRequest struct {
-    URL string `json:"url"`
+	URL string `json:"url"`
 }
 
 const ID_DEFAULT_LENGTH = 8
@@ -33,34 +33,34 @@ func generateShortID(length int) (string, error) {
 }
 
 func isValidURL(strURL string) bool {
-    URL, err := url.Parse(strURL)
-    if err != nil {
-        return false
-    }
-    if URL.Scheme == "" || URL.Host == "" {
-        return false
-    }
-    return true
+	URL, err := url.Parse(strURL)
+	if err != nil {
+		return false
+	}
+	if URL.Scheme == "" || URL.Host == "" {
+		return false
+	}
+	return true
 }
 
-func (cfg *Config) handleShortening(w http.ResponseWriter, r *http.Request) {	
+func (cfg *Config) handleShortening(w http.ResponseWriter, r *http.Request) {
 	var req ShortenRequest
 
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        http.Error(w, "Invalid request body", http.StatusBadRequest)
-        return
-    }
-    if req.URL == "" {
-        http.Error(w, "Missing 'url' field", http.StatusBadRequest)
-        return
-    }
-    if !isValidURL(req.URL) {
-        http.Error(w, "Not a valid URL", http.StatusBadRequest)
-        return
-    }
-	
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	if req.URL == "" {
+		http.Error(w, "Missing 'url' field", http.StatusBadRequest)
+		return
+	}
+	if !isValidURL(req.URL) {
+		http.Error(w, "Not a valid URL", http.StatusBadRequest)
+		return
+	}
+
 	var shortID string
-	shortID, err := cfg.db.GetID(context.Background(), req.URL)	
+	shortID, err := cfg.db.GetID(context.Background(), req.URL)
 	if shortID == "" {
 		for {
 			shortID, err = generateShortID(ID_DEFAULT_LENGTH)
@@ -69,16 +69,16 @@ func (cfg *Config) handleShortening(w http.ResponseWriter, r *http.Request) {
 					http.StatusInternalServerError)
 				return
 			}
-			original, _ := cfg.db.GetOriginalURL(context.Background(), shortID)	
+			original, _ := cfg.db.GetOriginalURL(context.Background(), shortID)
 			if original == "" {
-				params := db.AddURLParams {
-					ID: shortID,
-					OriginalUrl: req.URL,
-					CreatedAt: time.Now(),
+				params := db.AddURLParams{
+					ID:             shortID,
+					OriginalUrl:    req.URL,
+					CreatedAt:      time.Now(),
 					LastAccessedAt: time.Now(),
-					AccessCount: 0,
+					AccessCount:    0,
 				}
-				_, err := cfg.db.AddURL(context.Background(), params)	
+				_, err := cfg.db.AddURL(context.Background(), params)
 				if err != nil {
 					http.Error(w, "Faild to add entry to the database",
 						http.StatusInternalServerError)
@@ -104,7 +104,7 @@ func (cfg *Config) handleRedirection(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	original_url, err := cfg.cache.Get(id)
 	if err != nil {
-		original_url, err = cfg.db.GetOriginalURL(context.Background(), id)	
+		original_url, err = cfg.db.GetOriginalURL(context.Background(), id)
 		if err != nil || original_url == "" {
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return

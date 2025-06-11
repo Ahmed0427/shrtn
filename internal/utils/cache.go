@@ -6,17 +6,17 @@ import (
 
 type node struct {
 	value string
-	key string 
-	next *node
-	prev *node
+	key   string
+	next  *node
+	prev  *node
 }
 
 type LRUCache struct {
 	capacity int
-	size int
-	start *node
-	end *node
-	cache map[string]*node
+	size     int
+	start    *node
+	end      *node
+	cache    map[string]*node
 }
 
 func (this *LRUCache) addNode(n *node) {
@@ -29,7 +29,6 @@ func (this *LRUCache) addNode(n *node) {
 		this.end = n
 	}
 }
-
 
 func (this *LRUCache) removeNode(n *node) {
 	if n.next != nil {
@@ -49,10 +48,10 @@ func (this *LRUCache) removeNode(n *node) {
 func NewLRUCache(capacity int) *LRUCache {
 	return &LRUCache{
 		capacity: capacity,
-		size: 0,
-		start: nil,
-		end: nil,
-		cache: make(map[string]*node),
+		size:     0,
+		start:    nil,
+		end:      nil,
+		cache:    make(map[string]*node),
 	}
 }
 
@@ -61,15 +60,15 @@ func (this *LRUCache) Get(key string) (string, error) {
 		this.removeNode(n)
 		this.addNode(n)
 		return n.value, nil
-	} 
-	return "", fmt.Errorf("Not a cache hit") 
+	}
+	return "", fmt.Errorf("Not a cache hit")
 }
 
-func (this *LRUCache) Put(key string, value string)  {
+func (this *LRUCache) Put(key string, value string) {
 	n, ok := this.cache[key]
 	n = &node{
 		value: value,
-		key: key,
+		key:   key,
 	}
 	if ok {
 		this.removeNode(n)
